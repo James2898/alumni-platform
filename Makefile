@@ -1,4 +1,4 @@
-.PHONY: up down restart logs ps clean test db-shell
+.PHONY: up down restart logs ps clean test db-shell k8s-build k8s-apply k8s-delete k8s-diff
 
 # Boot entire local platform via Docker Compose
 up:
@@ -32,3 +32,18 @@ test:
 # Remove containers, volumes, and caches
 clean:
 	docker compose down -v --remove-orphans
+
+# Kubernetes targets
+k8s-build:
+	docker build -t alumni-api:latest backend --target prod
+	docker build -t alumni-web:latest frontend --target prod
+
+k8s-diff:
+	kubectl kustomize deploy/k8s
+
+k8s-apply:
+	kubectl apply -k deploy/k8s
+
+k8s-delete:
+	kubectl delete -k deploy/k8s
+

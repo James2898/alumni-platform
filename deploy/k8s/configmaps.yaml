@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alumni-config
+  namespace: alumni-platform
+  labels:
+    app.kubernetes.io/name: alumni-platform
+    app.kubernetes.io/part-of: alumni-management-system
+data:
+  APP_ENV: "production"
+  PORT: "8080"
+  DB_HOST: "alumni-db"
+  DB_PORT: "3306"
+  DB_NAME: "alumni_db"
+  MINIO_ENDPOINT: "alumni-storage:9000"
+  MINIO_PUBLIC_URL: "http://localhost:9000"
+  MINIO_BUCKET: "alumni-media"
+  MINIO_USE_SSL: "false"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+  namespace: alumni-platform
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/part-of: alumni-management-system
+data:
+  01_schema.sql: |
+    -- Alumni Platform Modernized Schema
+    -- Clean 3-Tier Enterprise Relational Architecture (MySQL 8.0)
+
+    SET FOREIGN_KEY_CHECKS = 0;
+    DROP TABLE IF EXISTS `work_experiences`;
+    DROP TABLE IF EXISTS `alumni_profiles`;
+    DROP TABLE IF EXISTS `admin_profiles`;
+    DROP TABLE IF EXISTS `courses`;
+    DROP TABLE IF EXISTS `users`;
+    SET FOREIGN_KEY_CHECKS = 1;
+
+    -- Users table for unified authentication (RBAC: Admin, Alumni)
+    CREATE TABLE `users` (
+        `id` VARCHAR(36) NOT NULL PRIMARY KEY,
+        `email` VARCHAR(255) NOT NULL UNIQUE,
+        `password_hash` VARCHAR(255) NOT NULL,
+        `role` ENUM('admin', 'alumni') NOT NULL DEFAULT 'alumni',
+        `status` ENUM('active', 'pending', 'suspended') NOT NULL DEFAULT 'pending',
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+        INDEX `idx_users_email` (`email`),
+        INDEX `idx_users_role_status` (`role`, `status`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    -- Academic Courses / Programs
+    CREATE TABLE `courses` (
+        `id` VARCHAR(36) NOT NULL PRIMARY KEY,
+        `code` VARCHAR(50) NOT NULL UNIQUE,
+        `name` VARCHAR(150) NOT NULL,
+        `department` VARCHAR(150) NOT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    -- Admin Profiles
+    CREATE TABLE `admin_profiles` (
+        `id` VARCHAR(36) NOT NULL PRIMARY KEY,
+        `user_id` VARCHAR(36) NOT NULL UNIQUE,
+        `first_name` VARCHAR(100) NOT NULL,
+        `last_name` VARCHAR(100) NOT NULL,
+        `phone` VARCHAR(50) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT `fk_admin_profiles_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    -- Alumni Profiles
+    CREATE TABLE `alumni_profiles` (
+        `id` VARCHAR(36) NOT NULL PRIMARY KEY,
+        `user_id` VARCHAR(36) NOT NULL UNIQUE,
+        `student_number` VARCHAR(64) NOT NULL UNIQUE,
+        `first_name` VARCHAR(100) NOT NULL,
+        `last_name` VARCHAR(100) NOT NULL,
+        `course_id` VARCHAR(36) NOT NULL,
+        `graduation_year` INT NOT NULL,
+        `avatar_key` VARCHAR(255) DEFAULT NULL,
+        `resume_key` VARCHAR(255) DEFAULT NULL,
+        `phone` VARCHAR(50) DEFAULT NULL,
+        `linkedin_url` VARCHAR(255) DEFAULT NULL,
+        `bio` TEXT DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT `fk_alumni_profiles_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+        CONSTRAINT `fk_alumni_profiles_course` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`),
+        INDEX `idx_alumni_course_year` (`course_id`, `graduation_year`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    -- Work Experiences (1-to-many from alumni profile)
+    CREATE TABLE `work_experiences` (
+        `id` VARCHAR(36) NOT NULL PRIMARY KEY,
+        `alumni_id` VARCHAR(36) NOT NULL,
+        `company_name` VARCHAR(150) NOT NULL,
+        `position` VARCHAR(100) NOT NULL,
+        `start_date` DATE NOT NULL,
+        `end_date` DATE NULL DEFAULT NULL,
+        `is_current` BOOLEAN NOT NULL DEFAULT FALSE,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT `fk_work_alumni` FOREIGN KEY (`alumni_id`) REFERENCES `alumni_profiles` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  02_seed.sql: |
+    -- Seed data for modernized Alumni Platform
+    SET FOREIGN_KEY_CHECKS = 0;
+
+    -- Standard Academic Courses
+    INSERT INTO `courses` (`id`, `code`, `name`, `department`) VALUES
+    ('c0000000-0000-0000-0000-000000000001', 'BSCS', 'Bachelor of Science in Computer Science', 'College of Computer Studies'),
+    ('c0000000-0000-0000-0000-000000000002', 'BSIT', 'Bachelor of Science in Information Technology', 'College of Computer Studies'),
+    ('c0000000-0000-0000-0000-000000000003', 'BSIS', 'Bachelor of Science in Information Systems', 'College of Computer Studies'),
+    ('c0000000-0000-0000-0000-000000000004', 'BSBA', 'Bachelor of Science in Business Administration', 'College of Business and Accountancy');
+
+    -- System Admin User (Password: admin123)
+    INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `status`) VALUES
+    ('u0000000-0000-0000-0000-000000000001', 'admin@alumni.edu', '$2a$10$vN4B7h0fQ5P2WjI.E3k.euuB69s5v5kX4Z.3Z7f7b1X6Xk9X2h0fq', 'admin', 'active');
+
+    INSERT INTO `admin_profiles` (`id`, `user_id`, `first_name`, `last_name`, `phone`) VALUES
+    ('a0000000-0000-0000-0000-000000000001', 'u0000000-0000-0000-0000-000000000001', 'System', 'Administrator', '+639123456789');
+
+    -- Verified Alumni Member (Password: password123)
+    INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `status`) VALUES
+    ('u0000000-0000-0000-0000-000000000002', 'jiro.martinez@alumni.edu', '$2a$10$7Z8VqY8O4m9m5w2F1G8K9.V8f9x0X3L2N4K6J8H0G2F4D6S8A0Q1W', 'alumni', 'active');
+
+    INSERT INTO `alumni_profiles` (`id`, `user_id`, `student_number`, `first_name`, `last_name`, `course_id`, `graduation_year`, `phone`, `linkedin_url`, `bio`) VALUES
+    ('p0000000-0000-0000-0000-000000000001', 'u0000000-0000-0000-0000-000000000002', '2015-00123-TG-0', 'Jiro', 'Martinez', 'c0000000-0000-0000-0000-000000000001', 2019, '+639234567890', 'https://linkedin.com/in/jiromartinez', 'Full Stack Cloud Engineer specializing in Go and distributed systems.');
+
+    INSERT INTO `work_experiences` (`id`, `alumni_id`, `company_name`, `position`, `start_date`, `end_date`, `is_current`) VALUES
+    ('w0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000001', 'Tech Innovations Inc.', 'Senior Software Engineer', '2021-06-01', NULL, TRUE),
+    ('w0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000001', 'Digital Solutions Corp.', 'Junior Developer', '2019-07-01', '2021-05-31', FALSE);
+
+    -- Pending Alumni Verification (Password: password123)
+    INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `status`) VALUES
+    ('u0000000-0000-0000-0000-000000000003', 'jolan.clemente@alumni.edu', '$2a$10$7Z8VqY8O4m9m5w2F1G8K9.V8f9x0X3L2N4K6J8H0G2F4D6S8A0Q1W', 'alumni', 'pending');
+
+    INSERT INTO `alumni_profiles` (`id`, `user_id`, `student_number`, `first_name`, `last_name`, `course_id`, `graduation_year`, `phone`, `bio`) VALUES
+    ('p0000000-0000-0000-0000-000000000002', 'u0000000-0000-0000-0000-000000000003', '2016-00456-TG-0', 'Jolan', 'Clemente', 'c0000000-0000-0000-0000-000000000002', 2020, '+639345678901', 'IT Project Lead and Agile Practitioner.');
+
+    SET FOREIGN_KEY_CHECKS = 1;
