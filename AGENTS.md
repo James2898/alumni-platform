@@ -72,6 +72,15 @@ make clean      # Destroy containers, networks, and persistent data volumes
 ## 4. Multi-Milestone Roadmap Status
 
 - [x] **Milestone 1**: Core Modern Platform (Go REST API + React 19 + MySQL 8.0 + MinIO + Docker Compose)
-- [ ] **Milestone 2**: Kubernetes Orchestration (CKAD manifests in `deploy/k8s/`, resource limits, probes, ingress)
+- [x] **Milestone 2**: Kubernetes Orchestration (CKAD manifests in `deploy/k8s/`, resource limits, probes, ingress)
 - [ ] **Milestone 3**: Infrastructure as Code (Terraform in `infra/terraform/`: S3, RDS, VPC)
 - [ ] **Milestone 4**: Intelligent AI Capabilities (AWS AI Practitioner: PDF resume extractor worker)
+
+---
+
+## 5. Kubernetes & Environment Testing Policy
+
+* **Primary Dev Environment**: Local development is exclusively run via Docker Compose (`make up`).
+* **Kubernetes Validation**: Manifests in `deploy/k8s/` are validated via client-side dry-run (`kubectl apply -k deploy/k8s/ --dry-run=client` or `make k8s-diff`).
+* **Live Cluster Deferral**: Do not require or prompt for live cluster rollouts (Docker Desktop K8s / Kind / Minikube) during milestone implementation; live cluster testing is deferred to the end of development.
+
