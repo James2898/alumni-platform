@@ -15,6 +15,14 @@ resources:
   - frontend-service.yaml
   - ingress.yaml
 
+configMapGenerator:
+  - name: mysql-initdb-config
+    files:
+      - 01_schema.sql=initdb/01_schema.sql
+      - 02_seed.sql=initdb/02_seed.sql
+    options:
+      disableNameSuffixHash: true
+
 images:
   - name: alumni-api
     newName: alumni-api
