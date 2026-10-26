@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alumni-frontend
+  namespace: alumni-platform
+  labels:
+    app.kubernetes.io/name: alumni-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: alumni-management-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alumni-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: alumni-frontend
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: alumni-management-system
+    spec:
+      containers:
+        - name: frontend
+          image: alumni-web:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3

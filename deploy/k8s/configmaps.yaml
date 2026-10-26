@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alumni-config
+  namespace: alumni-platform
+  labels:
+    app.kubernetes.io/name: alumni-platform
+    app.kubernetes.io/part-of: alumni-management-system
+data:
+  APP_ENV: "production"
+  PORT: "8080"
+  DB_HOST: "alumni-db"
+  DB_PORT: "3306"
+  DB_NAME: "alumni_db"
+  MINIO_ENDPOINT: "alumni-storage:9000"
+  # shortcut: local dev URL; replace with ingress host (e.g. s3.alumni.edu) in production DNS
+  MINIO_PUBLIC_URL: "http://localhost:9000"
+  MINIO_BUCKET: "alumni-media"
+  MINIO_USE_SSL: "false"
