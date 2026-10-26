@@ -84,3 +84,10 @@ make clean      # Destroy containers, networks, and persistent data volumes
 * **Kubernetes Validation**: Manifests in `deploy/k8s/` are validated via client-side dry-run (`kubectl apply -k deploy/k8s/ --dry-run=client` or `make k8s-diff`).
 * **Live Cluster Deferral**: Do not require or prompt for live cluster rollouts (Docker Desktop K8s / Kind / Minikube) during milestone implementation; live cluster testing is deferred to the end of development.
 
+---
+
+## 6. Git & Pull Request Conventions
+
+* **PR Assignee**: Pull requests must always be assigned to the user (`--add-assignee "@me"`).
+
+
