@@ -73,8 +73,8 @@ make clean      # Destroy containers, networks, and persistent data volumes
 
 - [x] **Milestone 1**: Core Modern Platform (Go REST API + React 19 + MySQL 8.0 + MinIO + Docker Compose)
 - [x] **Milestone 2**: Kubernetes Orchestration (CKAD manifests in `deploy/k8s/`, resource limits, probes, ingress)
-- [ ] **Milestone 3**: Infrastructure as Code (Terraform in `infra/terraform/`: S3, RDS, VPC)
-- [ ] **Milestone 4**: Intelligent AI Capabilities (AWS AI Practitioner: PDF resume extractor worker)
+- [-] **Milestone 3**: Infrastructure as Code (Terraform) — *Deferred / Skipped by user direction*
+- [ ] **Milestone 4**: Intelligent AI Capabilities (AWS AI Practitioner: PDF resume extractor worker) — *In Progress (Branch `feat/ai/resume-extractor-milestone-four`)*
 
 ---
 
